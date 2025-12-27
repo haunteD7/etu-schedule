@@ -1,5 +1,6 @@
 import logging
 import config
+from ScheduleClient import ScheduleClient
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import (
     ApplicationBuilder,
@@ -17,47 +18,50 @@ logger = logging.getLogger(__name__)
 
 ENTER_GROUP, SELECT_SCHEDULE_TYPE, SELECT_DAY = range(3)
 
+sc = ScheduleClient('https://digital.etu.ru/api')
+sc.request_schedule_week(4351)
+
 select_schedule_type_keyboard = InlineKeyboardMarkup([
     [
-        InlineKeyboardButton(text="На неделю", callback_data="schedule_week"),
-        InlineKeyboardButton(text="На конкретный день", callback_data="schedule_day"),
+        InlineKeyboardButton(text='На неделю', callback_data='schedule_week'),
+        InlineKeyboardButton(text='На конкретный день', callback_data='schedule_day'),
     ],
 ])
 select_day_keyboard = InlineKeyboardMarkup([
     [
-        InlineKeyboardButton(text="Сегодня", callback_data="day_today"),
-        InlineKeyboardButton(text="Завтра", callback_data="day_tomorrow"),
+        InlineKeyboardButton(text='Сегодня', callback_data='day_today'),
+        InlineKeyboardButton(text='Завтра', callback_data='day_tomorrow'),
     ],
 ])
 
 async def start(update: Update, context):
-    await update.message.reply_text("Введите номер группы:")
+    await update.message.reply_text('Введите номер группы:')
     return ENTER_GROUP
 
 async def enter_group(update: Update, context):
     context.user_data['group'] = int(update.message.text)
-    await update.message.reply_text("Выберите какое расписание вам нужно:", reply_markup=select_schedule_type_keyboard)
+    await update.message.reply_text('Выберите какое расписание вам нужно:', reply_markup=select_schedule_type_keyboard)
     return SELECT_SCHEDULE_TYPE
 
 async def select_schedule_type(update: Update, context):
     query = update.callback_query
     await query.answer()
 
-    if query.data == "schedule_day":
-        await query.edit_message_text("Выберите день:", reply_markup=select_day_keyboard)
+    if query.data == 'schedule_day':
+        await query.edit_message_text('Выберите день:', reply_markup=select_day_keyboard)
         return SELECT_DAY
-    elif query.data == "schedule_week":
-        await query.edit_message_text("*Типо расписание на неделю*")
+    elif query.data == 'schedule_week':
+        await query.edit_message_text('*Типо расписание на неделю*')
     return ConversationHandler.END
 
 async def select_day(update: Update, context):
     query = update.callback_query
     await query.answer()
 
-    if query.data == "day_today":
-        await query.edit_message_text("*Типо расписание на сегодня*")
-    elif query.data == "day_tomorrow":
-        await query.edit_message_text("*Типо расписание на завтра*")
+    if query.data == 'day_today':
+        await query.edit_message_text('*Типо расписание на сегодня*')
+    elif query.data == 'day_tomorrow':
+        await query.edit_message_text('*Типо расписание на завтра*')
 
     return ConversationHandler.END
 
@@ -78,12 +82,11 @@ def main():
         .token(config.TOKEN)
         .read_timeout(10)
         .write_timeout(10)
-        .concurrent_updates(True)
         .build()
     )
 
     application.add_handler(conv_handler)
     application.run_polling()
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
