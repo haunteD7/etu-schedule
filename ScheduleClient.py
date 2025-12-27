@@ -6,7 +6,7 @@ NOTHING_FOUND_MESSAGE = 'Для данной группы нет, либо не 
 
 DELIM = '------------------------\n' 
 
-def format_lesson_form(form: str):
+def format_lesson_form(form: str) -> str:
     match form:
        case "standard":
            return "Обычно"
@@ -15,28 +15,25 @@ def format_lesson_form(form: str):
        case "online":
            return "Онлайн"
     return ''
-
+def format_lesson_time(lesson) -> str:
+    return f'{lesson['start_time']}-{lesson['end_time']}'
+def format_lesson(lesson) -> str:
+    teacher = ''
+    if lesson['teacher']:
+        teacher = 'Преподаватель: ' + lesson['teacher'] + '\n'
+    room = ''
+    if lesson['room']:
+        room = 'Аудитория: ' + lesson['room'] + '\n'
+    form = ''
+    if lesson['form']:
+        form = 'Тип: ' + format_lesson_form(lesson['form']) + '\n'
+    return f'{DELIM}{format_lesson_time(lesson)}:\n{lesson['name']} ({lesson['subjectType']}):\n{teacher}{room}{form}{DELIM}'
 logger = logging.getLogger(__name__)
 
 class ScheduleClient:
     def __init__(self, base_url: str):
         self.__base_url: str = base_url
 
-    @staticmethod
-    def __format_lesson_time(lesson) -> str:
-       return f'{lesson['start_time']}-{lesson['end_time']}'
-    @staticmethod
-    def __format_lesson(lesson) -> str:
-        teacher = ''
-        if lesson['teacher']:
-            teacher = 'Преподаватель: ' + lesson['teacher'] + '\n'
-        room = ''
-        if lesson['room']:
-            room = 'Аудитория: ' + lesson['room'] + '\n'
-        form = ''
-        if lesson['form']:
-            form = 'Тип: ' + format_lesson_form(lesson['form']) + '\n'
-        return f'{DELIM}{ScheduleClient.__format_lesson_time(lesson)}:\n{lesson['name']} ({lesson['subjectType']}):\n{teacher}{room}{form}{DELIM}'
     def request_schedule_week(self, group: int, week_number: int) -> str:
         try:
             response = requests.get(self.__base_url + '/mobile/schedule', params = { 
@@ -78,9 +75,8 @@ class ScheduleClient:
                 lesson = lessons[j]
                 week = int(lesson['week'])
                 if week_number == week:
-                    lessons_str += self.__format_lesson(lesson)
+                    lessons_str += format_lesson(lesson)
 
-                
             response_str += f'{day['name']}\n{lessons_str}\n' 
         
         return response_str 
